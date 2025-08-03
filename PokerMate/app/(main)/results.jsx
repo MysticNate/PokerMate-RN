@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { Text, DataTable, Card, Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
@@ -13,6 +13,23 @@ const MOCK_RESULTS = [
 
 export default function ResultsPage() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  
+  // State to hold our calculated results
+  const [playerStats, setPlayerStats] = useState([]);
+
+  useEffect(() => {
+    if (params.players) {
+      const players = JSON.parse(params.players);
+      const stats = players.map(player => {
+        const buyin = Number(player.buyin) || 0;
+        const cashout = Number(player.cashout) || 0;
+        const pl = cashout - buyin;
+        return { id: player.id, name: player.name || 'N/A', buyin, cashout, pl };
+      });
+      setPlayerStats(stats);
+    }
+  }, [params.players]);
 
   const handleDone = () => {
     // Navigate back to the main menu, clearing the game creation history.
