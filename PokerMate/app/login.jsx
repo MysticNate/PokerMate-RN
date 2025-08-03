@@ -37,7 +37,7 @@ export default function Login() {
         {/* Temporary development button */}
         <Link href="/(main)/main" asChild>
           <Button mode="outlined" style={[styles.button, styles.tempButton]}>
-            🚧 Go to Main (Dev Only)
+            Go to Main (Dev Only)
           </Button>
         </Link>
       </View>

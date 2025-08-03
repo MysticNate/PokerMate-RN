@@ -33,9 +33,20 @@ export default function PotSplitPage() {
   };
 
   const handleCalculate = () => {
-    // We'll pass the pot data to the results page later
-    console.log("Calculating with:", { mainPotValue, mainPotPlayers, sidePots });
-    router.push('/resultPotSplit');
+    // 1. Create a data object with all the state
+    const potData = {
+      mainPot: {
+        value: mainPotValue,
+        players: mainPotPlayers,
+      },
+      sidePots: sidePots,
+    };
+
+    // 2. Navigate to the results page, passing the data as a string
+    router.push({
+      pathname: '/resultPotSplit',
+      params: { data: JSON.stringify(potData) } // 'data' is the key, value is the string
+    });
   };
 
   return (

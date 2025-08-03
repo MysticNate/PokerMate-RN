@@ -1,50 +1,62 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { Text, Card, Button, Divider, useTheme } from 'react-native-paper';
-import { useRouter } from 'expo-router';
-
-// UPDATED MOCK DATA: Removed 'remainderOwedTo'
-const MOCK_POT_RESULTS = {
-  mainPot: {
-    potValue: 1000,
-    players: 5,
-    pprm: 200,
-    remainder: 0,
-  },
-  sidePots: [
-    {
-      id: 1,
-      potName: 'Side Pot 1',
-      potValue: 255,
-      players: 3,
-      pprm: 85,
-      remainder: 0,
-    },
-    {
-      id: 2,
-      potName: 'Side Pot 2',
-      potValue: 102,
-      players: 2,
-      pprm: 50,
-      remainder: 2, // There is a remainder of 2
-    },
-  ],
-};
-
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function ResultPotSplitPage() {
   const router = useRouter();
   const theme = useTheme();
+  
+  // 1. Get the parameters from the URL
+  const params = useLocalSearchParams();
+  
+  // 2. Create state to hold our calculated results
+  const [results, setResults] = useState(null);
+
+  useEffect(() => {
+    // 3. This effect runs when the page loads
+    if (params.data) {
+      const potData = JSON.parse(params.data);
+      const calculatedResults = {
+        mainPot: null,
+        sidePots: [],
+      };
+
+      // --- Calculate Main Pot ---
+      const mainValue = Number(potData.mainPot.value) || 0;
+      const mainPlayers = Number(potData.mainPot.players) || 1;
+      calculatedResults.mainPot = {
+        potValue: mainValue,
+        players: mainPlayers,
+        pprm: Math.floor(mainValue / mainPlayers), // Pot Per Player
+        remainder: mainValue % mainPlayers,
+      };
+
+      // --- Calculate Side Pots ---
+      potData.sidePots.forEach((pot, index) => {
+        const sideValue = Number(pot.value) || 0;
+        const sidePlayers = Number(pot.players) || 1;
+        calculatedResults.sidePots.push({
+          id: pot.id,
+          potName: `Side Pot ${index + 1}`,
+          potValue: sideValue,
+          players: sidePlayers,
+          pprm: Math.floor(sideValue / sidePlayers),
+          remainder: sideValue % sidePlayers,
+        });
+      });
+      
+      setResults(calculatedResults);
+    }
+  }, [params.data]); // Re-run if the data changes
+
 
   const handleDone = () => {
     router.replace('/main');
   };
   
-  // UPDATED HELPER COMPONENT: Simplified message
   const RemainderMessage = ({ remainder }) => {
-    // If there's no remainder, don't render anything
     if (remainder <= 0) return null;
-    
     return (
       <View style={[styles.remainderBox, { backgroundColor: theme.colors.surfaceVariant }]}>
         <Text variant="bodyLarge">Heads up! There is a remainder of {remainder}.</Text>
@@ -52,28 +64,34 @@ export default function ResultPotSplitPage() {
     );
   };
 
+  // 4. If results haven't been calculated yet, show a loading or empty state
+  if (!results) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text>Calculating results...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  // 5. Render the calculated results
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
         <View style={styles.content}>
           <Text variant="headlineLarge" style={styles.pageTitle}>Pot Results</Text>
           
-          {/* Main Pot Result Card */}
           <Card style={styles.card}>
             <Card.Title title="Main Pot" />
             <Card.Content>
-              <Text style={styles.resultText}>Main Pot: {MOCK_POT_RESULTS.mainPot.potValue}</Text>
-              <Text style={styles.resultText}>Players: {MOCK_POT_RESULTS.mainPot.players}</Text>
+              <Text style={styles.resultText}>Main Pot: {results.mainPot.potValue}</Text>
+              <Text style={styles.resultText}>Players: {results.mainPot.players}</Text>
               <Divider style={styles.divider} />
-              <Text style={styles.finalResult}>Each Player gets {MOCK_POT_RESULTS.mainPot.pprm}</Text>
-              <RemainderMessage 
-                remainder={MOCK_POT_RESULTS.mainPot.remainder} 
-              />
+              <Text style={styles.finalResult}>Each Player gets {results.mainPot.pprm}</Text>
+              <RemainderMessage remainder={results.mainPot.remainder} />
             </Card.Content>
           </Card>
           
-          {/* Side Pot Result Cards */}
-          {MOCK_POT_RESULTS.sidePots.map(pot => (
+          {results.sidePots.map(pot => (
             <Card key={pot.id} style={styles.card}>
               <Card.Title title={pot.potName} />
               <Card.Content>
@@ -81,9 +99,7 @@ export default function ResultPotSplitPage() {
                 <Text style={styles.resultText}>Players: {pot.players}</Text>
                 <Divider style={styles.divider} />
                 <Text style={styles.finalResult}>Each Player gets {pot.pprm}</Text>
-                <RemainderMessage 
-                  remainder={pot.remainder} 
-                />
+                <RemainderMessage remainder={pot.remainder} />
               </Card.Content>
             </Card>
           ))}

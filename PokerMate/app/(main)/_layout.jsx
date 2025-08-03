@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import { customTheme } from '../../constants/theme';
 import MainAppbar from '../../comp/MainAppbar';
 
 export default function MainLayout() {
@@ -7,6 +8,7 @@ export default function MainLayout() {
       screenOptions={{
         // Use our custom component for the header
         header: (props) => <MainAppbar {...props} />,
+        contentStyle: { backgroundColor: customTheme.colors.background }
       }}
     >
       {/* Define titles for each screen here for cleanliness */}

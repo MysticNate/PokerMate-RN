@@ -6,9 +6,9 @@ import { useRouter } from 'expo-router';
 // This is our placeholder data for now.
 // Later, this will be calculated from the data passed from the previous screen.
 const MOCK_RESULTS = [
-  { id: 1, name: 'Alice', buyin: 100, cashout: 350, pl: 250 },
-  { id: 2, name: 'Bob', buyin: 200, cashout: 0, pl: -200 },
-  { id: 3, name: 'Charlie', buyin: 100, cashout: 50, pl: -50 },
+  { id: 1, name: 'Giora', buyin: 100, cashout: 350, pl: 250 },
+  { id: 2, name: 'Nati', buyin: 200, cashout: 0, pl: -200 },
+  { id: 3, name: 'Kuku', buyin: 100, cashout: 50, pl: -50 },
 ];
 
 export default function ResultsPage() {

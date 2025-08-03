@@ -1,3 +1,4 @@
+// In your layout.jsx
 import { Stack } from "expo-router";
 import { PaperProvider } from 'react-native-paper';
 import { customTheme } from '../constants/theme';
@@ -7,7 +8,8 @@ export default function RootLayout() {
     <PaperProvider theme={customTheme}>
       <Stack
         screenOptions={{
-          headerShown: false, 
+          headerShown: false,
+          contentStyle: { backgroundColor: customTheme.colors.background }
         }}
       />
     </PaperProvider>
