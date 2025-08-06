@@ -78,7 +78,19 @@ export default function RecordGamePage() {
   };
 
   const handleSolveGame = () => {
-    router.push('/solveGame'); 
+    const gameDetails = {
+      gameStart: gameStart.toISOString(), // Use ISO string for universal format
+      gameEnd: gameEnd.toISOString(),
+      gameType: gameType,
+      gameNote: gameNote,
+      location: location,
+    };
+    
+    // Navigate and pass the details as a parameter
+    router.push({
+      pathname: '/solveGame',
+      params: { gameDetails: JSON.stringify(gameDetails) }
+    }); 
   };
 
   return (

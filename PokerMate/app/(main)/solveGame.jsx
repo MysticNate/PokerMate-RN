@@ -1,7 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { View, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, Card, IconButton, useTheme, HelperText } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router'; 
+import { useAuth } from '../../context/AuthContext';
+
+const API_URL = 'http://PokerMate.somee.com/api';
 
 // This is a single row for a player
 function PlayerRow({ player, onPlayerChange, onDelete, canDelete, isDuplicate }) {
@@ -68,16 +71,16 @@ function PlayerRow({ player, onPlayerChange, onDelete, canDelete, isDuplicate })
 export default function SolveGamePage() {
   const router = useRouter();
   const theme = useTheme();
-  const playerIdCounter = useRef(2); 
+  const params = useLocalSearchParams(); // Get the params from the previous screen
+  const { token } = useAuth(); // Get the auth token
 
-  // Back to the simple player object
   const [players, setPlayers] = useState([
     { id: 1, name: '', buyin: '', cashout: '' },
     { id: 2, name: '', buyin: '', cashout: '' },
   ]);
-  
-  // State to track which names are duplicates. Set will hold names in lowercase.
   const [duplicateNames, setDuplicateNames] = useState(new Set());
+  const [isSolving, setIsSolving] = useState(false); // Add a loading state
+  const playerIdCounter = useRef(2);
 
   // Function to check for duplicate names
   const checkForDuplicates = (currentPlayers) => {
@@ -116,25 +119,73 @@ export default function SolveGamePage() {
     checkForDuplicates(updatedPlayers);
   };
   
-  const handleSolve = () => {
-    // Final check before solving
+  const handleSolve = async () => {
+    // Basic validation checks
     if (checkForDuplicates(players)) {
       Alert.alert("Duplicate Names", "Please ensure all player names are unique.");
       return;
     }
+    if (players.some(p => !p.name || !p.buyin || !p.cashout)) {
+      Alert.alert("Incomplete Data", "Please fill in Name, Buyin, and Cashout for all players.");
+      return;
+    }
 
+    setIsSolving(true);
+
+    // Get the game details passed from the recordGame page
+    const gameDetails = JSON.parse(params.gameDetails);
+    
     // Prepare the game string for the backend
     const gameStringForBackend = players
       .map(p => `${p.name.trim()} ${p.buyin} ${p.cashout}`)
       .join(',');
-    console.log("String for backend:", gameStringForBackend);
-    // This is what we will send to the server API later.
 
-    // --- FOR RESULTS PAGE ---
-    router.push({
-      pathname: '/results',
-      params: { players: JSON.stringify(players) }
-    });
+    // This is the object our API endpoint expects
+    const originalRequest = {
+      gameString: gameStringForBackend,
+      gameStart: gameDetails.gameStart,
+      gameEnd: gameDetails.gameEnd,
+      location: gameDetails.location,
+      note: gameDetails.gameNote,
+      // The fields for the second call are null for now
+      solutionChoice: null,
+      problematicGame: null,
+    };
+    
+    try {
+      const response = await fetch(`${API_URL}/games/solve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(originalRequest),
+      });
+
+      const resultData = await response.json();
+
+      if (response.status === 400) { // Unsolvable problem
+        throw new Error(resultData.message || "The game data is invalid and cannot be solved.");
+      }
+      if (!response.ok && response.status !== 202) { // Any other server error
+        throw new Error("An unexpected error occurred on the server.");
+      }
+
+      // SUCCESS. Navigate to the results page, passing the server's response
+      // and the original request data for the potential second call.
+      router.push({
+        pathname: '/results',
+        params: { 
+          result: JSON.stringify(resultData),
+          originalRequest: JSON.stringify(originalRequest)
+        }
+      });
+
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    } finally {
+      setIsSolving(false);
+    }
   };
 
   return (
@@ -170,6 +221,8 @@ export default function SolveGamePage() {
             mode="contained" 
             onPress={handleSolve} 
             style={[styles.solveButton, { backgroundColor: theme.colors.primary }]}
+            loading={isSolving}
+            disabled={isSolving}
           >
             Solve Game
           </Button>
