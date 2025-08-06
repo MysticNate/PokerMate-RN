@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
-import { Text, TextInput, Button, Card } from 'react-native-paper';
+import { View, StyleSheet, SafeAreaView, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, TextInput, Button, Card, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // 1. IMPORT
 
@@ -8,11 +8,12 @@ const CONFIG_STORAGE_KEY = '@PokerSolver:config'; // A unique key for our data
 
 export default function ConfigPage() {
   const router = useRouter();
+  const theme = useTheme();
   
   // State for our form inputs
   const [minTransfer, setMinTransfer] = useState('');
   const [currency, setCurrency] = useState('₪');
-  const [minChip, setMinChip] = useState('');
+  const [minChip, setMinChip] = useState('0.25');
   const [defaultTime, setDefaultTime] = useState('30');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -25,7 +26,7 @@ export default function ConfigPage() {
           const savedConfig = JSON.parse(jsonValue);
           setMinTransfer(savedConfig.minTransfer || '');
           setCurrency(savedConfig.currency || '₪');
-          setMinChip(savedConfig.minChip || '');
+          setMinChip(savedConfig.minChip || '0.25');
           setDefaultTime(savedConfig.defaultTime || '30');
         }
       } catch (e) {
@@ -52,48 +53,116 @@ export default function ConfigPage() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text>Loading configuration...</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.loadingContainer}>
+          <Text variant="bodyLarge" style={[styles.loadingText, { color: theme.colors.text }]}>
+            Loading configuration...
+          </Text>
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView>
-        <View style={styles.content}>
-          <Text variant="headlineLarge" style={styles.pageTitle}>Edit Config</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <KeyboardAvoidingView 
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text variant="headlineLarge" style={[styles.pageTitle, { color: theme.colors.text }]}>
+                Settings
+              </Text>
+              <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+                Configure your preferences
+              </Text>
+            </View>
 
-          <Card style={styles.card}>
-            <Card.Content>
-              <Text variant="titleLarge">Solver</Text>
-              <TextInput label="Minimum Transfer" value={minTransfer} onChangeText={setMinTransfer} keyboardType="numeric" mode="outlined" style={styles.input} />
-              <Text variant="bodyLarge" style={styles.label}>Currency Type</Text>
-              <Button mode="outlined" style={styles.spinnerButton} onPress={() => Alert.alert("Coming Soon", "Currency picker will be implemented.")}>
-                {`Current: ${currency}`}
-              </Button>
-            </Card.Content>
-          </Card>
-          
-          <Card style={styles.card}>
-            <Card.Content>
-              <Text variant="titleLarge">Pot Split</Text>
-              <TextInput label="Minimum Chip" value={minChip} onChangeText={setMinChip} keyboardType="numeric" mode="outlined" style={styles.input} />
-            </Card.Content>
-          </Card>
+            {/* Solver Settings */}
+            <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={2}>
+              <Card.Content style={styles.cardContent}>
+                <Text variant="titleLarge" style={[styles.cardTitle, { color: theme.colors.text }]}>
+                  Game Solver
+                </Text>
+                <TextInput 
+                  label="Minimum Transfer" 
+                  value={minTransfer} 
+                  onChangeText={setMinTransfer} 
+                  keyboardType="numeric" 
+                  mode="outlined" 
+                  style={styles.input}
+                  contentStyle={{ color: theme.colors.text }}
+                />
+                <View style={styles.currencySection}>
+                  <Text variant="bodyMedium" style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>
+                    Currency Type
+                  </Text>
+                  <Button 
+                    mode="outlined" 
+                    style={[styles.currencyButton, { borderColor: theme.colors.outline }]}
+                    textColor={theme.colors.onSurface}
+                    contentStyle={styles.currencyButtonContent}
+                    onPress={() => Alert.alert("Coming Soon", "T be implemented.")}
+                  >
+                    {`Current: ${currency}`}
+                  </Button>
+                </View>
+              </Card.Content>
+            </Card>
+            
+            {/* Pot Split Settings */}
+            <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={2}>
+              <Card.Content style={styles.cardContent}>
+                <Text variant="titleLarge" style={[styles.cardTitle, { color: theme.colors.text }]}>
+                  Pot Split
+                </Text>
+                <TextInput 
+                  label="Minimum Chip" 
+                  value={minChip} 
+                  onChangeText={setMinChip} 
+                  keyboardType="numeric" 
+                  mode="outlined" 
+                  style={styles.input}
+                  contentStyle={{ color: theme.colors.text }}
+                />
+              </Card.Content>
+            </Card>
 
-          <Card style={styles.card}>
-            <Card.Content>
-              <Text variant="titleLarge">Time</Text>
-              <TextInput label="Default Time (seconds)" value={defaultTime} onChangeText={setDefaultTime} keyboardType="numeric" mode="outlined" style={styles.input} />
-            </Card.Content>
-          </Card>
+            {/* Timer Settings */}
+            <Card style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={2}>
+              <Card.Content style={styles.cardContent}>
+                <Text variant="titleLarge" style={[styles.cardTitle, { color: theme.colors.text }]}>
+                  Timer
+                </Text>
+                <TextInput 
+                  label="Default Time (seconds)" 
+                  value={defaultTime} 
+                  onChangeText={setDefaultTime} 
+                  keyboardType="numeric" 
+                  mode="outlined" 
+                  style={styles.input}
+                  contentStyle={{ color: theme.colors.text }}
+                />
+              </Card.Content>
+            </Card>
 
-          <Button mode="contained" onPress={handleSave} style={styles.saveButton}>
-            Save Config
-          </Button>
-        </View>
-      </ScrollView>
+            {/* Save Button */}
+            <Button 
+              mode="contained" 
+              onPress={handleSave} 
+              style={[styles.saveButton, { backgroundColor: theme.colors.primary }]}
+              contentStyle={styles.saveButtonContent}
+              labelStyle={styles.saveButtonLabel}
+            >
+              Save Settings
+            </Button>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -102,30 +171,78 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    padding: 20,
+  keyboardView: {
+    flex: 1,
   },
-  pageTitle: {
-    marginBottom: 20,
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  content: {
+    padding: 24,
+    paddingTop: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
     textAlign: 'center',
   },
+  header: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 32,
+  },
+  pageTitle: {
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    textAlign: 'center',
+    opacity: 0.8,
+  },
   card: {
-    marginVertical: 10,
+    marginBottom: 20,
+    borderRadius: 16,
+  },
+  cardContent: {
+    padding: 20,
+  },
+  cardTitle: {
+    fontWeight: 'bold',
+    marginBottom: 16,
   },
   input: {
-    marginTop: 10,
+    marginBottom: 8,
+  },
+  currencySection: {
+    marginTop: 8,
   },
   label: {
-    marginTop: 15,
-    marginBottom: 5,
-    color: 'gray',
+    marginBottom: 8,
+    opacity: 0.8,
   },
-  spinnerButton: {
+  currencyButton: {
+    borderRadius: 8,
+  },
+  currencyButtonContent: {
     justifyContent: 'flex-start',
-    paddingVertical: 5,
+    paddingVertical: 8,
   },
   saveButton: {
-    marginTop: 20,
-    paddingVertical: 8,
+    marginTop: 12,
+    borderRadius: 12,
+  },
+  saveButtonContent: {
+    paddingVertical: 12,
+  },
+  saveButtonLabel: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

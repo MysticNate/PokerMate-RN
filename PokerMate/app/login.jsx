@@ -1,17 +1,15 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { View, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { Link } from 'expo-router';
 import AppLogo from '../comp/AppLogo';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
-    const handleLogin = () => {
-    // TODO: Add real authentication logic here
-    console.log('Login pressed');
-    
-    // For now, just navigate to main page
-    router.replace('/(main)/main');
-  };
+    const { login } = useAuth(); // Get the login function
+
+   const [email, setEmail] = useState('');
+   const [password, setPassword] = useState('');
     
     return (
     <SafeAreaView style={styles.container}>
@@ -19,13 +17,27 @@ export default function Login() {
         <AppLogo />
         <Text variant="headlineMedium" style={styles.title}>Welcome Back!</Text>
 
-        <TextInput label="Email" mode="outlined" style={styles.input} />
-        <TextInput label="Password" mode="outlined" style={styles.input} secureTextEntry />
+        <TextInput
+        label="Email"
+        mode="outlined"
+        style={styles.input}
+        value={email}
+        onChangeText={setEmail}
+        />
+
+        <TextInput
+        label="Password"
+        mode="outlined"
+        style={styles.input}
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+        />
 
         <Button 
           mode="contained" 
           style={styles.button}
-          onPress={() => console.log('Login pressed')}
+          onPress={() => login(email, password)}
         >
           Log In
         </Button>

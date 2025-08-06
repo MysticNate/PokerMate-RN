@@ -1,105 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { Text, Card, Button, Divider, useTheme } from 'react-native-paper';
+import { Text, Card, Button, Divider, useTheme, ActivityIndicator } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function ResultPotSplitPage() {
   const router = useRouter();
   const theme = useTheme();
   
-  // 1. Get the parameters from the URL
+  // Get the parameters from the URL
   const params = useLocalSearchParams();
   
-  // 2. Create state to hold our calculated results
-  const [results, setResults] = useState(null);
+  // State will now hold the array of PotResult objects directly
+  const [potResults, setPotResults] = useState([]);
 
   useEffect(() => {
-    // 3. This effect runs when the page loads
+    // This effect runs when the page loads
     if (params.data) {
-      const potData = JSON.parse(params.data);
-      const calculatedResults = {
-        mainPot: null,
-        sidePots: [],
-      };
-
-      // --- Calculate Main Pot ---
-      const mainValue = Number(potData.mainPot.value) || 0;
-      const mainPlayers = Number(potData.mainPot.players) || 1;
-      calculatedResults.mainPot = {
-        potValue: mainValue,
-        players: mainPlayers,
-        pprm: Math.floor(mainValue / mainPlayers), // Pot Per Player
-        remainder: mainValue % mainPlayers,
-      };
-
-      // --- Calculate Side Pots ---
-      potData.sidePots.forEach((pot, index) => {
-        const sideValue = Number(pot.value) || 0;
-        const sidePlayers = Number(pot.players) || 1;
-        calculatedResults.sidePots.push({
-          id: pot.id,
-          potName: `Side Pot ${index + 1}`,
-          potValue: sideValue,
-          players: sidePlayers,
-          pprm: Math.floor(sideValue / sidePlayers),
-          remainder: sideValue % sidePlayers,
-        });
-      });
-      
-      setResults(calculatedResults);
+      try {
+        // The data is now a direct array of results from the server
+        const resultsFromServer = JSON.parse(params.data);
+        setPotResults(resultsFromServer);
+      } catch (e) {
+        console.error("Failed to parse results data:", e);
+        // Handle error, maybe navigate back or show a message
+      }
     }
-  }, [params.data]); // Re-run if the data changes
+  }, [params.data]);
 
 
   const handleDone = () => {
-    router.replace('/main');
+    router.replace('/(main)/main');
   };
   
   const RemainderMessage = ({ remainder }) => {
-    if (remainder <= 0) return null;
+    // The property name from C# might be camelCase: 'remainder'
+    const remainderValue = remainder || 0;
+    if (remainderValue <= 0) return null;
+    
     return (
       <View style={[styles.remainderBox, { backgroundColor: theme.colors.surfaceVariant }]}>
-        <Text variant="bodyLarge">Heads up! There is a remainder of {remainder}.</Text>
+        <Text variant="bodyLarge">Heads up! There is a remainder of {remainderValue}.</Text>
       </View>
     );
   };
 
-  // 4. If results haven't been calculated yet, show a loading or empty state
-  if (!results) {
+  // If results haven't loaded yet
+  if (potResults.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text>Calculating results...</Text>
+        <ActivityIndicator animating={true} size="large" />
       </SafeAreaView>
     );
   }
 
-  // 5. Render the calculated results
+  // Render the results by mapping over the array
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
         <View style={styles.content}>
           <Text variant="headlineLarge" style={styles.pageTitle}>Pot Results</Text>
           
-          <Card style={styles.card}>
-            <Card.Title title="Main Pot" />
-            <Card.Content>
-              <Text style={styles.resultText}>Main Pot: {results.mainPot.potValue}</Text>
-              <Text style={styles.resultText}>Players: {results.mainPot.players}</Text>
-              <Divider style={styles.divider} />
-              <Text style={styles.finalResult}>Each Player gets {results.mainPot.pprm}</Text>
-              <RemainderMessage remainder={results.mainPot.remainder} />
-            </Card.Content>
-          </Card>
-          
-          {results.sidePots.map(pot => (
-            <Card key={pot.id} style={styles.card}>
-              <Card.Title title={pot.potName} />
+          {potResults.map((pot, index) => (
+            <Card key={index} style={styles.card}>
+              {/* C# properties are PascalCase, so we use pot.PotName, pot.PotAmount etc. */}
+              {/* JSON serialization might turn them into camelCase: pot.potName */}
+              <Card.Title title={pot.potName || pot.PotName} /> 
               <Card.Content>
-                <Text style={styles.resultText}>{pot.potName}: {pot.potValue}</Text>
-                <Text style={styles.resultText}>Players: {pot.players}</Text>
+                <Text style={styles.resultText}>Pot Value: {pot.potAmount || pot.PotAmount}</Text>
+                <Text style={styles.resultText}>Players: {pot.playerAmount || pot.PlayerAmount}</Text>
                 <Divider style={styles.divider} />
-                <Text style={styles.finalResult}>Each Player gets {pot.pprm}</Text>
-                <RemainderMessage remainder={pot.remainder} />
+                <Text style={styles.finalResult}>Each Player gets: {pot.ppr || pot.PPR}</Text>
+                <RemainderMessage remainder={pot.remainder || pot.Remainder} />
               </Card.Content>
             </Card>
           ))}
@@ -117,6 +88,7 @@ export default function ResultPotSplitPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
   },
   content: {
     padding: 15,

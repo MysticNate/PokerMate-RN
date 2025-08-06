@@ -2,14 +2,20 @@ import * as ImagePicker from 'expo-image-picker';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { Alert, SafeAreaView, StyleSheet, View } from 'react-native';
-import { Avatar, Button, Text, Surface, useTheme } from 'react-native-paper';
+import { Avatar, Button, Surface, Text, useTheme } from 'react-native-paper';
+import { useAuth } from '../../context/AuthContext';
+import { Image } from 'react-native';
+
+const API_BASE_URL = 'http://PokerMate.somee.com/api'; 
 
 export default function ProfilePage() {
-  const username = "Player1"; // Placeholder
+  //const username = "Player1"; // Placeholder
   const theme = useTheme();
+  const { user, logout, uploadPfp } = useAuth(); // Get user, logout, and uploadPfp
+  const username = user?.nickname || "Player";
 
-  // ADD STATE TO HOLD THE SELECTED IMAGE URI
-  const [imageUri, setImageUri] = useState(null);
+  // ADD STATE TO HOLD THE SELECTED IMAGE URI (local, for immediate display)
+  const [pickedImageUri, setPickedImageUri] = useState(null);
 
   // CREATE THE FUNCTION TO OPEN THE CAMERA/IMAGE GALLERY
   const pickImage = async () => {
@@ -23,7 +29,7 @@ export default function ProfilePage() {
         },
         {
           text: 'Gallery',
-          onPress: () => openGallery(),
+          onPress: () => pickFromGallery(),
         },
         {
           text: 'Cancel',
@@ -33,67 +39,88 @@ export default function ProfilePage() {
     );
   };
 
-  // Function to take a photo with camera
-  const takePhoto = async () => {
-    // Request camera permission
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+  // Function to pick from gallery and upload
+  const pickFromGallery = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Sorry, we need camera permissions to take photos!');
-      return;
+        Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
+        return;
     }
 
-    // Launch the camera
-    let result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
+    let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
     });
 
-    // If the user didn't cancel, update the image URI state
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+        const uri = result.assets[0].uri;
+        setPickedImageUri(uri); // Show immediately
+        
+        try {
+        await uploadPfp(uri); // Upload to server
+        setPickedImageUri(null); // Clear picked image since it's now uploaded
+        } catch (error) {
+        // Keep the picked image visible if upload fails
+        console.error('Failed to upload:', error);
+        }
     }
   };
 
-  // Function to open gallery
-  const openGallery = async () => {
-    // Request permission first
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  // Function to take a photo with camera and upload
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
-      return;
+        Alert.alert('Permission Denied', 'Sorry, we need camera permissions to take photos!');
+        return;
     }
 
-    // Launch the image library
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
+    let result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
     });
 
-    // If the user didn't cancel, update the image URI state
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+        const uri = result.assets[0].uri;
+        setPickedImageUri(uri);
+        
+        try {
+        await uploadPfp(uri);
+        setPickedImageUri(null);
+        } catch (error) {
+        console.error('Failed to upload:', error);
+        }
     }
   };
   
+  // Determine the final image source
+  let avatarSource = require('../../assets/images/default-pfp.png'); // Default
+  if (pickedImageUri) {
+    avatarSource = { uri: pickedImageUri };
+  } else if (user?.profilePictureBase64) {
+  avatarSource = { uri: user.profilePictureBase64 };
+  }
+
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       {/* Profile Header */}
       <View style={styles.header}>
         <Surface style={[styles.avatarContainer, { backgroundColor: theme.colors.surface }]} elevation={2}>
           <Avatar.Image 
             size={120} 
-            source={imageUri ? { uri: imageUri } : require('../../assets/images/default-pfp.png')}
+            source={avatarSource}
             style={styles.avatar} 
           />
         </Surface>
         
-        <Text variant="headlineMedium" style={[styles.greeting, { color: theme.colors.text }]}>
+        <Text variant="headlineMedium" style={[styles.greeting, { color: theme.colors.text }]}> 
           Hello {username}
         </Text>
-        <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+        <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}> 
           Manage your profile settings
         </Text>
       </View>
@@ -148,6 +175,17 @@ export default function ProfilePage() {
             View Stats
           </Button>
         </Link>
+        <Button 
+          icon="logout"
+          mode="outlined"
+          style={[styles.button, { borderColor: theme.colors.error }]}
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
+          textColor={theme.colors.error}
+          onPress={logout}
+        >
+          Logout
+        </Button>
       </View>
     </SafeAreaView>
   );

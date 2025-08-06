@@ -2,16 +2,18 @@ import React from 'react';
 import { View, StyleSheet, SafeAreaView } from 'react-native';
 import { Text, Button, useTheme } from 'react-native-paper';
 import { Link, useNavigation } from 'expo-router';
+import { useAuth } from '../../context/AuthContext';
 
 export default function MainPage() {
   const navigation = useNavigation();
   const theme = useTheme();
+  const { user } = useAuth();
   
   React.useEffect(() => {
     navigation.setOptions({ title: 'Main Menu' }); 
   }, [navigation]);
 
-  const username = "Player1"; // Placeholder for now
+  const username = user?.nickname || "Player"; // in case failed to fetch user nickname 
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>

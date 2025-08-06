@@ -3,8 +3,12 @@ import { View, StyleSheet, SafeAreaView } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 import { Link } from 'expo-router';
 import AppLogo from '../comp/AppLogo';
+import { useAuth } from '../context/AuthContext';
+
 
 export default function Index() {
+  const { googleSignIn } = useAuth();
+
   return (
     <SafeAreaView style={styles.container}>
       <AppLogo />
@@ -23,7 +27,7 @@ export default function Index() {
           mode="contained" 
           icon="google" 
           style={[styles.button, {backgroundColor: '#db4437'}]}
-          onPress={() => console.log('Google Sign-In pressed')} // Placeholder
+          onPress={googleSignIn} 
         >
           Sign In With Google
         </Button>
