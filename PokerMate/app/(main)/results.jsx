@@ -4,7 +4,6 @@ import { Text, DataTable, Card, Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
 // This is our placeholder data for now.
-// Later, this will be calculated from the data passed from the previous screen.
 const MOCK_RESULTS = [
   { id: 1, name: 'Giora', buyin: 100, cashout: 350, pl: 250 },
   { id: 2, name: 'Nati', buyin: 200, cashout: 0, pl: -200 },
@@ -70,17 +69,6 @@ export default function ResultsPage() {
               </DataTable>
             </Card.Content>
           </Card>
-
-          {/* We can add another card here for Game Info if needed */}
-          {/* 
-          <Card style={styles.card}>
-            <Card.Content>
-              <Text variant="titleLarge">Game Info</Text>
-              <Text>Type: Texas Holdem</Text>
-              <Text>Location: Home</Text>
-            </Card.Content>
-          </Card>
-          */}
 
           <Button
             mode="contained"

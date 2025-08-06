@@ -9,15 +9,14 @@ import { Image } from 'react-native';
 const API_BASE_URL = 'http://PokerMate.somee.com/api'; 
 
 export default function ProfilePage() {
-  //const username = "Player1"; // Placeholder
   const theme = useTheme();
-  const { user, logout, uploadPfp } = useAuth(); // Get user, logout, and uploadPfp
+  const { user, logout, uploadPfp, changeNickname  } = useAuth(); 
   const username = user?.nickname || "Player";
 
-  // ADD STATE TO HOLD THE SELECTED IMAGE URI (local, for immediate display)
+  // STATE TO HOLD THE SELECTED IMAGE URI 
   const [pickedImageUri, setPickedImageUri] = useState(null);
 
-  // CREATE THE FUNCTION TO OPEN THE CAMERA/IMAGE GALLERY
+  // FUNCTION TO OPEN THE CAMERA/IMAGE GALLERY
   const pickImage = async () => {
     Alert.alert(
       'Select Image',
@@ -44,7 +43,7 @@ export default function ProfilePage() {
   const pickFromGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
+        Alert.alert('Permission Denied', 'Sorry, we need permissions to open gallery');
         return;
     }
 
@@ -57,7 +56,7 @@ export default function ProfilePage() {
 
     if (!result.canceled) {
         const uri = result.assets[0].uri;
-        setPickedImageUri(uri); // Show immediately
+        setPickedImageUri(uri); 
         
         try {
         await uploadPfp(uri); // Upload to server
@@ -95,9 +94,35 @@ export default function ProfilePage() {
         }
     }
   };
+
+  const handlePressChangeNickname = () => {
+    // Alert.prompt is a simple iOS-only feature
+    Alert.prompt(
+      "Change Nickname",
+      "Enter your new nickname:",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "OK",
+          // The text the user entered is passed to the onPress function
+          onPress: (newNickname) => {
+            if (newNickname && newNickname.trim() !== "") {
+              // Call the function 
+              changeNickname(newNickname.trim());
+            }
+          },
+        },
+      ],
+      'plain-text', // Input type
+      user?.nickname || '' // Default text in the input box
+    );
+  };
   
-  // Determine the final image source
-  let avatarSource = require('../../assets/images/default-pfp.png'); // Default
+  // Default image source
+  let avatarSource = require('../../assets/images/default-pfp.png'); 
   if (pickedImageUri) {
     avatarSource = { uri: pickedImageUri };
   } else if (user?.profilePictureBase64) {
@@ -145,7 +170,7 @@ export default function ProfilePage() {
           contentStyle={styles.buttonContent}
           labelStyle={styles.buttonLabel}
           textColor={theme.colors.onSurface}
-          onPress={() => console.log("Change Username pressed")}
+          onPress={handlePressChangeNickname}
         >
           Change Username
         </Button>

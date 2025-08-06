@@ -13,7 +13,7 @@ export default function MainPage() {
     navigation.setOptions({ title: 'Main Menu' }); 
   }, [navigation]);
 
-  const username = user?.nickname || "Player"; // in case failed to fetch user nickname 
+  const username = user?.nickname || "Player";
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>

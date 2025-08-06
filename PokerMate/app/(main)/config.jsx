@@ -1,25 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { Text, TextInput, Button, Card, useTheme } from 'react-native-paper';
+import { Text, TextInput, Button, Card, useTheme, ActivityIndicator  } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // 1. IMPORT
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const API_URL = 'https://PokerMate.somee.com/api';
 const CONFIG_STORAGE_KEY = '@PokerSolver:config'; // A unique key for our data
 
 export default function ConfigPage() {
   const router = useRouter();
   const theme = useTheme();
   
+
   // State for our form inputs
-  const [minTransfer, setMinTransfer] = useState('');
+  const [minTransfer, setMinTransfer] = useState(''); 
   const [currency, setCurrency] = useState('₪');
   const [minChip, setMinChip] = useState('0.25');
-  const [defaultTime, setDefaultTime] = useState('30');
+  const [defaultTime, setDefaultTime] = useState('30'); 
   const [isLoading, setIsLoading] = useState(true);
 
-  // 2. LOAD settings when the component mounts
+  // LOAD settings 
   useEffect(() => {
     const loadConfig = async () => {
+      setIsLoading(true);
       try {
         const jsonValue = await AsyncStorage.getItem(CONFIG_STORAGE_KEY);
         if (jsonValue != null) {
@@ -30,36 +33,45 @@ export default function ConfigPage() {
           setDefaultTime(savedConfig.defaultTime || '30');
         }
       } catch (e) {
-        Alert.alert("Error", "Failed to load config.");
+        Alert.alert("Error", "Failed to load saved config.");
       } finally {
         setIsLoading(false);
       }
     };
     loadConfig();
-  }, []); // The empty array [] means this runs only once on mount
+  }, []);
 
-  // 3. SAVE settings when the button is pressed
+  // SAVE settings 
   const handleSave = async () => {
     try {
       const config = { minTransfer, currency, minChip, defaultTime };
       const jsonValue = JSON.stringify(config);
       await AsyncStorage.setItem(CONFIG_STORAGE_KEY, jsonValue);
       Alert.alert("Success", "Configuration saved!");
-      router.back(); // Go back to the previous screen
+      router.back();
     } catch (e) {
       Alert.alert("Error", "Failed to save config.");
     }
   };
+  
+  // --- CURRENCY PICKER  ---
+  const showCurrencyPicker = () => {
+    Alert.alert(
+      "Select Currency", "Choose your currency.",
+      [
+        { text: "₪", onPress: () => setCurrency('₪') },
+        { text: "$", onPress: () => setCurrency('$') },
+        { text: "€", onPress: () => setCurrency('€') },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
+  };
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <View style={styles.loadingContainer}>
-          <Text variant="bodyLarge" style={[styles.loadingText, { color: theme.colors.text }]}>
-            Loading configuration...
-          </Text>
-        </View>
-      </SafeAreaView>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
     );
   }
 
@@ -106,7 +118,7 @@ export default function ConfigPage() {
                     style={[styles.currencyButton, { borderColor: theme.colors.outline }]}
                     textColor={theme.colors.onSurface}
                     contentStyle={styles.currencyButtonContent}
-                    onPress={() => Alert.alert("Coming Soon", "T be implemented.")}
+                    onPress={showCurrencyPicker}
                   >
                     {`Current: ${currency}`}
                   </Button>

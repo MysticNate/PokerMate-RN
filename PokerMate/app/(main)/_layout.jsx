@@ -6,12 +6,12 @@ export default function MainLayout() {
   return (
     <Stack
       screenOptions={{
-        // Use our custom component for the header
+        // Use custom component for the header
         header: (props) => <MainAppbar {...props} />,
         contentStyle: { backgroundColor: customTheme.colors.background }
       }}
     >
-      {/* Define titles for each screen here for cleanliness */}
+      {/* Define titles for each screen */}
       <Stack.Screen name="main" options={{ title: 'Main Menu' }} />
       <Stack.Screen name="profile" options={{ title: 'Profile' }} />
       <Stack.Screen name="config" options={{ title: 'Configuration' }} />

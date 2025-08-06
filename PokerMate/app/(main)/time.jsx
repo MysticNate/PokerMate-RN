@@ -2,21 +2,45 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, SafeAreaView } from 'react-native';
 import { Text, Button, Card, IconButton, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const DEFAULT_TIME = 30; // Default time unless changed by user
+const CONFIG_STORAGE_KEY = '@PokerSolver:config'
 
 export default function TimePage() {
   const router = useRouter();
   const theme = useTheme();
   
   // State Management
-  const [time, setTime] = useState(DEFAULT_TIME);
+  const [defaultTime, setDefaultTime] = useState(30);
+  const [isLoading, setIsLoading] = useState(true);
+  const [time, setTime] = useState(defaultTime);
   const [isActive, setIsActive] = useState(false); // Is the timer running?
   
   // useRef is used to hold the interval ID. It doesn't re-render the component when it changes.
   const intervalRef = useRef(null);
 
-  // The core timer logic
+  useEffect(() => {
+    const loadDefaultTime = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem(CONFIG_STORAGE_KEY);
+        if (jsonValue != null) {
+          const savedConfig = JSON.parse(jsonValue);
+          // Get the saved time, or fall back to 30 if it's not set
+          const savedTime = Number(savedConfig.defaultTime) || 30;
+          setDefaultTime(savedTime);
+          setTime(savedTime); // Also set the initial timer value
+        }
+      } catch (e) {
+        // If loading fails, we'll just use the default of 30
+        console.error("Failed to load timer config, using default.", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadDefaultTime();
+  }, []); // Empty array means this runs once when the component mounts.
+
+  // timer logic
   useEffect(() => {
     if (isActive) {
       intervalRef.current = setInterval(() => {
@@ -45,7 +69,7 @@ export default function TimePage() {
 
   const handleReset = () => {
     setIsActive(false);
-    setTime(DEFAULT_TIME);
+    setTime(defaultTime);
   };
   
   const adjustTime = (amount) => {
@@ -79,7 +103,7 @@ export default function TimePage() {
           Timer
         </Text>
         <Text variant="bodyMedium" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
-          Default: {DEFAULT_TIME} seconds
+          Default: {defaultTime} seconds
         </Text>
       </View>
       

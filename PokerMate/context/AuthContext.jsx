@@ -53,7 +53,7 @@ export function AuthProvider({ children }) {
         Alert.alert('Registration Failed', errorData);
         return;
       }
-      // After successful registration, automatically log them in
+      // After successful registration, automatically log in
       await login(email, password);
     } catch (e) {
       Alert.alert('Registration Error', e.message);
@@ -94,6 +94,56 @@ export function AuthProvider({ children }) {
       Alert.alert('Login Error', e.message);
     }
   };
+
+  const changeNickname = async (newNickname) => {
+  try {
+    console.log(`Sending request to change nickname to: ${newNickname}`);
+    console.log(`Using token: Bearer ${authState.token}`); // Log the token to be sure
+
+    const response = await fetch(`${API_URL}/profile/change-nickname`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authState.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ newNickname }),
+    });
+
+    // Let's add more detailed logging here
+    console.log('Received response with status:', response.status);
+    
+    // This is a crucial check
+    if (response.status === 204) { // 204 means No Content
+      console.log('Server returned 204 No Content. Update is successful.');
+      // Handle success without parsing JSON
+      // (The code to update local state goes here)
+      return; 
+    }
+
+    const responseText = await response.text();
+    console.log('Raw response text:', responseText);
+
+    if (!response.ok) {
+      throw new Error(responseText || "Failed to change nickname.");
+    }
+    
+    // Now, we can safely parse
+    const data = JSON.parse(responseText);
+
+    // --- IMPORTANT: UPDATE THE LOCAL STATE ---
+    const updatedUser = { ...authState.user, nickname: newNickname };
+    setAuthState(current => ({
+      ...current,
+      user: updatedUser
+    }));
+    await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+    Alert.alert("Success", "Nickname updated!");
+
+  } catch (e) {
+    Alert.alert('Error', e.message);
+    throw e;
+  }
+};
 
   const googleSignIn = async () => {
   try {
@@ -139,7 +189,7 @@ export function AuthProvider({ children }) {
       
       console.log('Google user info:', userInfo);
 
-      // Send to your backend
+      // Send to backend
       const response = await fetch(`${API_URL}/auth/google-signin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -243,6 +293,7 @@ export function AuthProvider({ children }) {
     isLoading,
     register,
     login,
+    changeNickname,
     googleSignIn,
     logout,
     uploadPfp,

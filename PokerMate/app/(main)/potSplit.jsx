@@ -3,7 +3,7 @@ import { View, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native'
 import { Text, TextInput, Button, Card, IconButton, ActivityIndicator } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '../../context/AuthContext'; // To get the token
+import { useAuth } from '../../context/AuthContext'; 
 
 export default function PotSplitPage() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function PotSplitPage() {
   const [sidePots, setSidePots] = useState([]);
   
   
-  const [minChip, setMinChip] = useState('1');
+  const [minChip, setMinChip] = useState('1'); // Default minimum chip value
   const [isLoading, setIsLoading] = useState(true);
   const [isCalculating, setIsCalculating] = useState(false);
   const sidePotIdCounter = useRef(0);

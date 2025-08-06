@@ -3,7 +3,7 @@ import { View, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native'
 import { Text, TextInput, Button, Card, IconButton, useTheme, HelperText } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
-// This is a single row for a player, now with error handling
+// This is a single row for a player
 function PlayerRow({ player, onPlayerChange, onDelete, canDelete, isDuplicate }) {
   return (
     <Card style={styles.playerCard}>
@@ -76,7 +76,7 @@ export default function SolveGamePage() {
     { id: 2, name: '', buyin: '', cashout: '' },
   ]);
   
-  // ADDED: State to track which names are duplicates
+  // State to track which names are duplicates. Set will hold names in lowercase.
   const [duplicateNames, setDuplicateNames] = useState(new Set());
 
   // Function to check for duplicate names
@@ -123,16 +123,14 @@ export default function SolveGamePage() {
       return;
     }
 
-    // --- FOR YOUR TEAMMATE ---
-    // Build the exact string format he requested.
+    // Prepare the game string for the backend
     const gameStringForBackend = players
       .map(p => `${p.name.trim()} ${p.buyin} ${p.cashout}`)
       .join(',');
     console.log("String for backend:", gameStringForBackend);
     // This is what we will send to the server API later.
 
-    // --- FOR OUR RESULTS PAGE ---
-    // We still pass the full object to our own results page.
+    // --- FOR RESULTS PAGE ---
     router.push({
       pathname: '/results',
       params: { players: JSON.stringify(players) }

@@ -46,7 +46,8 @@ export default function Login() {
           <Button mode="text">Not registered yet? Sign Up!</Button>
         </Link>
 
-        {/* Temporary development button */}
+        
+        {/* TODO: Temporary development button */}
         <Link href="/(main)/main" asChild>
           <Button mode="outlined" style={[styles.button, styles.tempButton]}>
             Go to Main (Dev Only)

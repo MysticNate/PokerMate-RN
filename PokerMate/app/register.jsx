@@ -26,7 +26,7 @@ export default function Register() {
       password: password,
     });
 
-    // Call the register function from our context
+    // Call the register function 
     register(email, nickname, password);
   };
 

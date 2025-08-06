@@ -38,7 +38,7 @@ export default function RecordGamePage() {
       // Reverse geocode to get an address
       let address = await Location.reverseGeocodeAsync(currentPosition.coords);
       
-      // Format the location string (e.g., "San Francisco, CA")
+      // Format the location string ("Herzliya, Tel Aviv District")
       if (address && address.length > 0) {
         const { city, region } = address[0];
         setLocation(city ? `${city}, ${region}` : 'Unknown Location');
@@ -94,7 +94,6 @@ export default function RecordGamePage() {
 
             <Card style={styles.card}>
               <Card.Content>
-                {/* We wrap the TextInput in a TouchableOpacity to trigger the picker */}
                 <TouchableOpacity onPress={() => showDatePicker('start')}>
                   <View>
                     <TextInput
@@ -151,10 +150,9 @@ export default function RecordGamePage() {
             </Button>
           </View>
         </ScrollView>
-        {/* THE MODAL COMPONENT - It's invisible until isPickerVisible is true */}
         <DateTimePickerModal
           isVisible={isPickerVisible}
-          mode="datetime" // Can be "date", "time", or "datetime"
+          mode="datetime" 
           onConfirm={handleConfirm}
           onCancel={hideDatePicker}
         />
@@ -163,7 +161,6 @@ export default function RecordGamePage() {
   );
 }
 
-// Styles are mostly the same, just added 'input' for consistent spacing
 const styles = StyleSheet.create({
   container: {
     flex: 1,

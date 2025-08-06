@@ -33,7 +33,7 @@ export default function ResultPotSplitPage() {
   };
   
   const RemainderMessage = ({ remainder }) => {
-    // The property name from C# might be camelCase: 'remainder'
+    // The property name from C#: 'remainder'
     const remainderValue = remainder || 0;
     if (remainderValue <= 0) return null;
     
@@ -62,8 +62,6 @@ export default function ResultPotSplitPage() {
           
           {potResults.map((pot, index) => (
             <Card key={index} style={styles.card}>
-              {/* C# properties are PascalCase, so we use pot.PotName, pot.PotAmount etc. */}
-              {/* JSON serialization might turn them into camelCase: pot.potName */}
               <Card.Title title={pot.potName || pot.PotName} /> 
               <Card.Content>
                 <Text style={styles.resultText}>Pot Value: {pot.potAmount || pot.PotAmount}</Text>
