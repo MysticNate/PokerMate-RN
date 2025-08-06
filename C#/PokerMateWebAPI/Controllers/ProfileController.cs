@@ -15,7 +15,7 @@ namespace PokerMateWebAPI.Controllers
 
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // Only logged-in users
+    [Authorize] 
     public class ProfileController : ControllerBase
     {
         private readonly DataContext _context;

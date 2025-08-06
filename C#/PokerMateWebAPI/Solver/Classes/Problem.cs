@@ -6,36 +6,26 @@
         // boolean resolved; // PROGRAM WILL SET 
 
         // C# properties with automatic getters and setters
-        public string? NewGameString { get; set; }
+        public string? NewGameString { get; set; } // Players + buyin + cashout
         public string? ProblemDescriptionString { get; set; }
-        public string? RemainderString { get; set; } // If there is a remainder will be shown here
-        public string? ErrorMessage { get; set; }
-        public List<string> SolutionsSuggested { get; set; }
-        public string? ChosenSolution { get; set; }
+        public string? ErrorMessage { get; set; } // Will happen if not enough losers / winner / both
+        public List<SolutionSuggestions> SolutionsSuggested { get; set; } // 1 / 3 total solutions (depending in many losers / winner or just 1)
+        public SolutionSuggestions? ChosenSolution { get; set; }
 
-        public Problem(string? newGameString, string? problemDescriptionString, string? remainderString)
+        public Problem(string? newGameString, string? problemDescriptionString)
         {
             NewGameString = newGameString;
             ProblemDescriptionString = problemDescriptionString;
-            RemainderString = remainderString;
-            SolutionsSuggested = new List<string>();
-        }
-
-        // For when there is no remainder 
-        public Problem(string? newGameString, string? problemDescriptionString)
-            : this(newGameString, problemDescriptionString, null)
-        {
+            SolutionsSuggested = new List<SolutionSuggestions>();
         }
 
         // Blank
         public Problem()
-            : this(null, null, null)
-        {
-        }
+        { }
 
         public override string ToString()
         {
-            return $"Problem [NewGameString={NewGameString}, ProblemDescriptionString={ProblemDescriptionString}, RemainderString={RemainderString}, ErrorMessage={ErrorMessage}, SolutionsSuggested={SolutionsSuggested}, ChosenSolution={ChosenSolution}]";
+            return $"Problem [NewGameString={NewGameString}, ProblemDescriptionString={ProblemDescriptionString}, ErrorMessage={ErrorMessage}, SolutionsSuggested={SolutionsSuggested}, ChosenSolution={ChosenSolution}]";
         }
     }
 }
