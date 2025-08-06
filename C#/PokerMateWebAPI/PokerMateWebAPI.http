@@ -1,0 +1,6 @@
+@PokerMateWebAPI_HostAddress = http://localhost:5036
+
+GET {{PokerMateWebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
