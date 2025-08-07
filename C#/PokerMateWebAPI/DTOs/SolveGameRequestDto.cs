@@ -9,6 +9,7 @@ namespace PokerMateWebAPI.DTOs
         public string GameString { get; set; }
         public DateTime GameStart { get; set; }
         public DateTime GameEnd { get; set; }
+        public string GameType { get; set; } 
         public string? Location { get; set; }
         public string? Note { get; set; }
 

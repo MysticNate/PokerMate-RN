@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import { View, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { Link } from 'expo-router';
 import AppLogo from '../comp/AppLogo';
@@ -13,47 +13,57 @@ export default function Login() {
     
     return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <AppLogo />
-        <Text variant="headlineMedium" style={styles.title}>Welcome Back!</Text>
-
-        <TextInput
-        label="Email"
-        mode="outlined"
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        />
-
-        <TextInput
-        label="Password"
-        mode="outlined"
-        style={styles.input}
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        />
-
-        <Button 
-          mode="contained" 
-          style={styles.button}
-          onPress={() => login(email, password)}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        style={styles.keyboardContainer}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          Log In
-        </Button>
+          <View style={styles.content}>
+            <AppLogo />
+            <Text variant="headlineMedium" style={styles.title}>Welcome Back!</Text>
 
-        <Link href="/register" asChild>
-          <Button mode="text">Not registered yet? Sign Up!</Button>
-        </Link>
+            <TextInput
+            label="Email"
+            mode="outlined"
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            />
 
-        
-        {/* TODO: Temporary development button */}
-        <Link href="/(main)/main" asChild>
-          <Button mode="outlined" style={[styles.button, styles.tempButton]}>
-            Go to Main (Dev Only)
-          </Button>
-        </Link>
-      </View>
+            <TextInput
+            label="Password"
+            mode="outlined"
+            style={styles.input}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            />
+
+            <Button 
+              mode="contained" 
+              style={styles.button}
+              onPress={() => login(email, password)}
+            >
+              Log In
+            </Button>
+
+            <Link href="/register" asChild>
+              <Button mode="text">Not registered yet? Sign Up!</Button>
+            </Link>
+
+            
+            {/* TODO: Temporary development button */}
+            {/* <Link href="/(main)/main" asChild>
+              <Button mode="outlined" style={[styles.button, styles.tempButton]}>
+                Go to Main (Dev Only)
+              </Button>
+            </Link> */}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -61,8 +71,15 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  keyboardContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 20,
   },
   content: {
     width: '85%',

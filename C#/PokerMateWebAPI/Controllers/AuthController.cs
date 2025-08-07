@@ -78,9 +78,15 @@ namespace PokerMateWebAPI.Controllers
             try
             {
                 // Verify the Google ID token
+                var validAudiences = new[]
+                {
+                    "1091977169961-3chhcjpsavp3jmmtndjdtfm0395p89lq.apps.googleusercontent.com", // Web
+                    "1091977169961-n6ethd47hb9uqlt5p9op5i4oif9nc1gf.apps.googleusercontent.com", // iOS
+                };
+
                 var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, new GoogleJsonWebSignature.ValidationSettings()
                 {
-                    Audience = new[] { "1091977169961-3chhcjpsavp3jmmtndjdtfm0395p89lq.apps.googleusercontent.com" } 
+                    Audience = validAudiences
                 });
 
                 // Check if user already exists

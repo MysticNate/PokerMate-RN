@@ -35,8 +35,8 @@ namespace PokerMateWebAPI.Controllers
             //  logic
             GameResult gameResult = FuncHelper.AnalyzeGameString(
                 userID: userIdString,
-                userGameID: 0, // We don't have a game ID 
-                type: "Texas Holdem", 
+                userGameID: 0, 
+                type: request.GameType, 
                 gameString: request.GameString,
                 gameStart: request.GameStart,
                 gameEnd: request.GameEnd,
@@ -52,8 +52,7 @@ namespace PokerMateWebAPI.Controllers
             // Check if there is a problem that requires user interaction
             if (gameResult.Problem != null && gameResult.Problem.ErrorMessage == null)
             {
-                // There's a solvable problem. Return the GameResult to the client
-                // so they can choose a solution.
+                // There's a solvable problem. Return the GameResult to the client so they can choose a solution.
                 // We use a specific status code like 202 Accepted to signal this.
                 return new ObjectResult(gameResult) { StatusCode = 202 };
             }
@@ -65,8 +64,8 @@ namespace PokerMateWebAPI.Controllers
                 return BadRequest(new { message = gameResult.Problem.ErrorMessage });
             }
 
-            // --- If we reach here, the game is solved (Scenario A or after the 2nd call) ---
-            // Now, we save the final, solved data to our database.
+            // --- If we reach here, the game is solved  ---
+            // Now, we save the final solved data to our database.
             var newGame = new Game
             {
                 UserId = int.Parse(userIdString!),

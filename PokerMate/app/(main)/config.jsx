@@ -4,7 +4,7 @@ import { Text, TextInput, Button, Card, useTheme, ActivityIndicator  } from 'rea
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'https://PokerMate.somee.com/api';
+//const API_URL = 'https://PokerMate.somee.com/api';
 const CONFIG_STORAGE_KEY = '@PokerSolver:config'; // A unique key for our data
 
 export default function ConfigPage() {

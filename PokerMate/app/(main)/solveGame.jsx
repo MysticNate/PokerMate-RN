@@ -147,11 +147,16 @@ export default function SolveGamePage() {
       gameEnd: gameDetails.gameEnd,
       location: gameDetails.location,
       note: gameDetails.gameNote,
-      // The fields for the second call are null for now
       solutionChoice: null,
       problematicGame: null,
     };
     
+    console.log('=== REQUEST DETAILS ===');
+    console.log('API_URL:', API_URL);
+    console.log('Token exists:', !!token);
+    console.log('Request body:', JSON.stringify(originalRequest, null, 2));
+    console.log('=====================');
+
     try {
       const response = await fetch(`${API_URL}/games/solve`, {
         method: 'POST',
@@ -162,7 +167,24 @@ export default function SolveGamePage() {
         body: JSON.stringify(originalRequest),
       });
 
-      const resultData = await response.json();
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      const responseText = await response.text();
+        console.log('Raw response:', responseText); 
+        
+        if (!responseText) {
+            throw new Error("Server returned empty response");
+        }
+
+        let resultData;
+        try {
+            resultData = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            console.error('Response text:', responseText);
+            throw new Error("Invalid JSON response from server");
+        }
 
       if (response.status === 400) { // Unsolvable problem
         throw new Error(resultData.message || "The game data is invalid and cannot be solved.");
@@ -182,6 +204,7 @@ export default function SolveGamePage() {
       });
 
     } catch (e) {
+      console.log('Fetch error:', e);
       Alert.alert('Error', e.message);
     } finally {
       setIsSolving(false);

@@ -1,7 +1,7 @@
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Button, Card, Text, TextInput } from 'react-native-paper';
 
@@ -19,6 +19,8 @@ export default function RecordGamePage() {
   // State for the date picker modal
   const [isPickerVisible, setPickerVisibility] = useState(false);
   const [pickerMode, setPickerMode] = useState('start'); // 'start' or 'end'
+
+  const gameTypeOptions = ['Texas Holdem', 'Omaha', 'Mixed'];
 
   const getLocation = async () => {
     setIsFetchingLocation(true); // Show loading indicator on the button
@@ -69,6 +71,19 @@ export default function RecordGamePage() {
     hideDatePicker();
   };
 
+  const showGameTypePicker = () => {
+    Alert.alert(
+      "Select Game Type", 
+      "Choose your poker game type.",
+      [
+        { text: "Texas Holdem", onPress: () => setGameType('Texas Holdem') },
+        { text: "Omaha", onPress: () => setGameType('Omaha') },
+        { text: "Mixed", onPress: () => setGameType('Mixed') },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
+  };
+
   // Function to format the date for display
   const formatDate = (date) => {
     return date.toLocaleString([], {
@@ -79,7 +94,7 @@ export default function RecordGamePage() {
 
   const handleSolveGame = () => {
     const gameDetails = {
-      gameStart: gameStart.toISOString(), // Use ISO string for universal format
+      gameStart: gameStart.toISOString(), // ISO string for universal format
       gameEnd: gameEnd.toISOString(),
       gameType: gameType,
       gameNote: gameNote,
@@ -131,7 +146,7 @@ export default function RecordGamePage() {
                 </TouchableOpacity>
 
                 <Text variant="bodyLarge" style={styles.label}>Game Type</Text>
-                <Button mode="outlined" style={styles.spinnerButton} onPress={() => console.log('Open game type picker')}>
+                <Button mode="outlined" style={styles.spinnerButton} onPress={showGameTypePicker}>
                   {`Type: ${gameType}`}
                 </Button>
               </Card.Content>
@@ -162,6 +177,8 @@ export default function RecordGamePage() {
             </Button>
           </View>
         </ScrollView>
+        
+        {/* Date Time Picker Modal */}
         <DateTimePickerModal
           isVisible={isPickerVisible}
           mode="datetime" 
