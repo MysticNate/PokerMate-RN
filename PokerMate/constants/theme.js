@@ -12,5 +12,6 @@ export const customTheme = {
     surface: '#2c2c2e',      // The color of card-like surfaces (like TextInput and Card)
     text: '#FFFFFF',          // Default text color for <Text> components
     placeholder: '#a9a9a9',   // Color for placeholder text in inputs
+    tertiary: '#4CD964',      // Green for profit (matches iOS system green)
   },
 };

@@ -15,10 +15,10 @@ export default function Index() {
   }
 
   if (authenticated) {
-    // If the user is authenticated, redirect them to the main part of the app.
+    // If the user is authenticated, redirect them to main
     return <Redirect href="/(main)/main" />;
   } else {
-    // If the user is not authenticated, redirect them to the landing page.
+    // If the user is not authenticated, redirect them to landing page.
     return <Redirect href="/landing" />;
   }
 }

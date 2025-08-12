@@ -23,6 +23,9 @@ export default function MainLayout() {
 
       <Stack.Screen name="potSplit" options={{ title: 'ChipChop Pot Splitter' }} />
       <Stack.Screen name="resultPotSplit" options={{ title: 'Pot Split Results' }} />
+
+        <Stack.Screen name="gameHistory" options={{ title: 'Game History' }} />
+        <Stack.Screen name="gameStats" options={{ title: 'View Statistics' }} />
     </Stack>
   );
 }

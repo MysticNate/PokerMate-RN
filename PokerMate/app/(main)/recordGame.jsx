@@ -98,6 +98,7 @@ export default function RecordGamePage() {
       gameEnd: gameEnd.toISOString(),
       gameType: gameType,
       gameNote: gameNote,
+      
       location: location,
     };
     

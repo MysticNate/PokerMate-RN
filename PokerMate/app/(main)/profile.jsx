@@ -188,7 +188,7 @@ export default function ProfilePage() {
           </Button>
         </Link>
         
-        <Link href="/viewStats" asChild>
+        <Link href="/gameStats" asChild>
           <Button 
             icon="chart-bar" 
             mode="outlined" 

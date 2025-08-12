@@ -3,6 +3,7 @@ import { View, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native'
 import { Text, TextInput, Button, Card, IconButton, useTheme, HelperText } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router'; 
 import { useAuth } from '../../context/AuthContext';
+import { GameHistoryService } from '../../utils/GameHistoryService';
 
 const API_URL = 'http://PokerMate.somee.com/api';
 
@@ -120,96 +121,344 @@ export default function SolveGamePage() {
   };
   
   const handleSolve = async () => {
-    // Basic validation checks
-    if (checkForDuplicates(players)) {
-      Alert.alert("Duplicate Names", "Please ensure all player names are unique.");
-      return;
-    }
-    if (players.some(p => !p.name || !p.buyin || !p.cashout)) {
-      Alert.alert("Incomplete Data", "Please fill in Name, Buyin, and Cashout for all players.");
-      return;
-    }
+  
+  // If already solving, prevent duplicate calls
+  if (isSolving) {
+    return;
+  }
 
-    setIsSolving(true);
+  if (!params.gameDetails) {
+    Alert.alert("Missing Game Data", "Could not find the details from the previous screen.");
+    return;
+  }
 
-    // Get the game details passed from the recordGame page
-    const gameDetails = JSON.parse(params.gameDetails);
+  // Basic validation checks
+  if (checkForDuplicates(players)) {
+    Alert.alert("Duplicate Names", "Please ensure all player names are unique.");
+    return;
+  }
+  
+  if (players.some(p => !p.name || !p.buyin || !p.cashout)) {
+    Alert.alert("Incomplete Data", "Please fill in Name, Buyin, and Cashout for all players.");
+    return;
+  }
+
+  setIsSolving(true);
+
+  try {
     
-    // Prepare the game string for the backend
-    const gameStringForBackend = players
-      .map(p => `${p.name.trim()} ${p.buyin} ${p.cashout}`)
-      .join(',');
-
-    // This is the object our API endpoint expects
+    const gameDetails = JSON.parse(params.gameDetails);
+    const gameStringForBackend = players.map(p => `${p.name.trim()} ${p.buyin} ${p.cashout}`).join(',');
+    
+    
     const originalRequest = {
       gameString: gameStringForBackend,
       gameStart: gameDetails.gameStart,
       gameEnd: gameDetails.gameEnd,
+      gameType: gameDetails.gameType,
       location: gameDetails.location,
       note: gameDetails.gameNote,
       solutionChoice: null,
       problematicGame: null,
     };
+
+   const response = await fetch(`${API_URL}/games/solve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(originalRequest),
+    });
+
+  
+
+    const responseText = await response.text();
     
-    console.log('=== REQUEST DETAILS ===');
-    console.log('API_URL:', API_URL);
-    console.log('Token exists:', !!token);
-    console.log('Request body:', JSON.stringify(originalRequest, null, 2));
-    console.log('=====================');
 
-    try {
-      const response = await fetch(`${API_URL}/games/solve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(originalRequest),
-      });
-
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-
-      const responseText = await response.text();
-        console.log('Raw response:', responseText); 
+    if (response.status === 200) {
+      
+      try {
+        const result = JSON.parse(responseText);
         
-        if (!responseText) {
-            throw new Error("Server returned empty response");
-        }
-
-        let resultData;
-        try {
-            resultData = JSON.parse(responseText);
-        } catch (parseError) {
-            console.error('JSON Parse Error:', parseError);
-            console.error('Response text:', responseText);
-            throw new Error("Invalid JSON response from server");
-        }
-
-      if (response.status === 400) { // Unsolvable problem
-        throw new Error(resultData.message || "The game data is invalid and cannot be solved.");
+        const gameDetails = JSON.parse(params.gameDetails);
+    
+        // Save the game
+        await GameHistoryService.saveGame(result, gameDetails, players);
+        
+        router.push({
+          pathname: '/results',
+          params: { 
+            result: JSON.stringify(result),
+            originalRequest: JSON.stringify(originalRequest)
+          }
+        });
+        
+      } catch (parseError) {
+        Alert.alert('Parse Error', 'Could not parse successful result');
       }
-      if (!response.ok && response.status !== 202) { // Any other server error
-        throw new Error("An unexpected error occurred on the server.");
+      
+    } else if (response.status === 202) {
+      
+      try {
+        const problemResult = JSON.parse(responseText);
+       
+        router.push({
+          pathname: '/results',
+          params: { 
+            result: JSON.stringify(problemResult),
+            originalRequest: JSON.stringify(originalRequest)
+          }
+        });
+        
+      } catch (parseError) {
+        Alert.alert('Parse Error', 'Could not parse problem data');
       }
-
-      // SUCCESS. Navigate to the results page, passing the server's response
-      // and the original request data for the potential second call.
-      router.push({
-        pathname: '/results',
-        params: { 
-          result: JSON.stringify(resultData),
-          originalRequest: JSON.stringify(originalRequest)
-        }
-      });
-
-    } catch (e) {
-      console.log('Fetch error:', e);
-      Alert.alert('Error', e.message);
-    } finally {
-      setIsSolving(false);
+      
+    } else if (response.status === 400) {
+      
+      try {
+        const errorData = JSON.parse(responseText);
+        const errorMessage = errorData.message || 'Invalid game data';
+        Alert.alert('Invalid Game Data', errorMessage);
+      } catch (parseError) {
+        Alert.alert('Invalid Game', 'The game data is invalid');
+      }
+      
+    } else {
+      Alert.alert('Server Error', `Unexpected response: ${response.status}`);
     }
-  };
+
+  } catch (error) {
+    
+    Alert.alert('Connection Error', `Network error: ${error.message}`);
+    
+  } finally {
+   
+    setIsSolving(false);
+  }
+  
+};
+
+  // Replace your handleSolve function with this step-by-step test:
+// const handleSolve = async () => {
+//   setIsSolving(true);
+
+//   try {
+//     console.log('=== STARTING STEP-BY-STEP TESTS ===');
+//     console.log('API_URL:', API_URL);
+    
+//     // STEP 1: Test basic connectivity (no auth)
+//     console.log('\n--- STEP 1: Testing basic connectivity ---');
+//     try {
+//       const pingResponse = await fetch(`${API_URL}/games/ping`, {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//       });
+      
+//       console.log('Ping Status:', pingResponse.status);
+//       const pingText = await pingResponse.text();
+//       console.log('Ping Response:', pingText);
+      
+//       if (!pingResponse.ok) {
+//         throw new Error(`Step 1 failed: ${pingResponse.status}`);
+//       }
+//       console.log('✅ Step 1 PASSED: Basic connectivity works');
+//     } catch (error) {
+//       console.log('❌ Step 1 FAILED:', error.message);
+//       Alert.alert('Connection Test Failed', `Cannot reach server: ${error.message}`);
+//       return;
+//     }
+
+//     // STEP 2: Test authentication
+//     console.log('\n--- STEP 2: Testing authentication ---');
+//     try {
+//       const authResponse = await fetch(`${API_URL}/games/auth-test`, {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           'Authorization': `Bearer ${token}`,
+//         },
+//       });
+      
+//       console.log('Auth Status:', authResponse.status);
+//       const authText = await authResponse.text();
+//       console.log('Auth Response:', authText);
+      
+//       if (!authResponse.ok) {
+//         throw new Error(`Step 2 failed: ${authResponse.status} - ${authText}`);
+//       }
+//       console.log('✅ Step 2 PASSED: Authentication works');
+//     } catch (error) {
+//       console.log('❌ Step 2 FAILED:', error.message);
+//       Alert.alert('Auth Test Failed', `Authentication issue: ${error.message}`);
+//       return;
+//     }
+
+//     // STEP 3: Test database
+//     console.log('\n--- STEP 3: Testing database ---');
+//     try {
+//       const dbResponse = await fetch(`${API_URL}/games/db-test`, {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//           'Authorization': `Bearer ${token}`,
+//         },
+//       });
+      
+//       console.log('DB Status:', dbResponse.status);
+//       const dbText = await dbResponse.text();
+//       console.log('DB Response:', dbText);
+      
+//       if (!dbResponse.ok) {
+//         throw new Error(`Step 3 failed: ${dbResponse.status} - ${dbText}`);
+//       }
+//       console.log('✅ Step 3 PASSED: Database works');
+//     } catch (error) {
+//       console.log('❌ Step 3 FAILED:', error.message);
+//       Alert.alert('Database Test Failed', `Database issue: ${error.message}`);
+//       return;
+//     }
+
+//     // Add this before your Step 4 test to check date parsing:
+// console.log('\n--- DATE PARSING TEST ---');
+// try {
+//   const dateTestRequest = {
+//     gameString: "A 5 10,B 5 0",
+//     gameStart: gameDetails.gameStart,
+//     gameEnd: gameDetails.gameEnd,
+//     gameType: gameDetails.gameType,
+//     location: gameDetails.location,
+//     note: gameDetails.gameNote,
+//   };
+  
+//   console.log('Sending dates:', {
+//     gameStart: dateTestRequest.gameStart,
+//     gameEnd: dateTestRequest.gameEnd
+//   });
+  
+//   const dateResponse = await fetch(`${API_URL}/games/test-dates`, {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify(dateTestRequest),
+//   });
+  
+//   console.log('Date Test Status:', dateResponse.status);
+//   const dateText = await dateResponse.text();
+//   console.log('Date Test Response:', dateText);
+  
+//   const dateResult = JSON.parse(dateText);
+//   if (dateResult.success) {
+//     console.log('=== SERVER DATE DEBUG ===');
+//     dateResult.debugInfo?.forEach((log, index) => {
+//       console.log(`${index + 1}: ${log}`);
+//     });
+//     console.log('✅ Date parsing test completed');
+//   } else {
+//     console.log('❌ Date parsing test failed:', dateResult.error);
+//   }
+  
+// } catch (error) {
+//   console.log('❌ Date test failed:', error.message);
+// }
+
+//     console.log('\n--- STEP 4: Testing with ALL AnalyzeGameString parameters ---');
+//   try {
+//     const gameDetails = JSON.parse(params.gameDetails);
+    
+//     const gameStringForBackend = players
+//       .map(p => `${p.name.trim()} ${p.buyin} ${p.cashout}`)
+//       .join(',');
+
+//     // Send ALL parameters that AnalyzeGameString expects
+//     const completeTestRequest = {
+//       // Core game data
+//       gameString: gameStringForBackend,
+//       gameStart: gameDetails.gameStart,
+//       gameEnd: gameDetails.gameEnd,
+//       gameType: gameDetails.gameType,
+//       location: gameDetails.location || "",
+//       note: gameDetails.gameNote || "",
+//       solutionChoice: "",
+//       problematicGame: null,
+      
+//       // Additional parameters that AnalyzeGameString needs
+//       userID: "8", // Your user ID from the database test
+//       userGameID: 0,
+//       AINote: "",
+//       minTransfer: 1.0, // Default min transfer value
+//       priorityPlayers: [], // Empty array
+//     };
+
+//     console.log('Sending COMPLETE request with all AnalyzeGameString parameters:');
+//     console.log(JSON.stringify(completeTestRequest, null, 2));
+
+//     // Use a new test endpoint that accepts all parameters
+//     const gameResponse = await fetch(`${API_URL}/games/complete-debug-solve`, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'Authorization': `Bearer ${token}`,
+//       },
+//       body: JSON.stringify(completeTestRequest),
+//     });
+
+//     console.log('Complete Debug Solve Status:', gameResponse.status);
+//     const gameText = await gameResponse.text();
+//     console.log('Complete Debug Solve Response:', gameText);
+
+//     if (gameResponse.status === 200) {
+//       try {
+//         const debugResult = JSON.parse(gameText);
+        
+//         // Show all debug logs from server
+//         console.log('=== SERVER DEBUG LOGS ===');
+//         debugResult.debugLog?.forEach((log, index) => {
+//           console.log(`${index + 1}: ${log}`);
+//         });
+        
+//         if (debugResult.success) {
+//           console.log('✅ Step 4 PASSED: AnalyzeGameString works with ALL parameters!');
+//           Alert.alert('Success!', 'AnalyzeGameString works perfectly with all parameters!');
+//         } else {
+//           console.log('❌ Step 4 FAILED:', debugResult.error);
+          
+//           if (debugResult.stackTrace) {
+//             console.log('=== STACK TRACE ===');
+//             console.log(debugResult.stackTrace);
+//           }
+          
+//           Alert.alert(
+//             'AnalyzeGameString Error', 
+//             `Error: ${debugResult.error}\n\nCheck console for full details.`
+//           );
+//         }
+        
+//       } catch (parseError) {
+//         console.log('Could not parse debug response:', parseError);
+//         Alert.alert('Parse Error', 'Could not parse server response');
+//       }
+//     } else {
+//       console.log('❌ Complete debug endpoint returned non-200 status');
+//       Alert.alert('Debug Error', `Server returned status ${gameResponse.status}`);
+//     }
+
+//   } catch (error) {
+//     console.log('❌ Step 4 FAILED:', error.message);
+//     Alert.alert('Step 4 Failed', error.message);
+//   }
+
+//     console.log('🎉 ALL TESTS PASSED! The basic infrastructure is working.');
+
+//   } catch (e) {
+//     console.log('Unexpected error:', e);
+//     Alert.alert('Unexpected Error', e.message);
+//   } finally {
+//     setIsSolving(false);
+//   }
+// };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>

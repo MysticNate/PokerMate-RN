@@ -130,7 +130,7 @@ export function AuthProvider({ children }) {
     // Now, we can safely parse
     const data = JSON.parse(responseText);
 
-    // --- IMPORTANT: UPDATE THE LOCAL STATE ---
+    // update the user state with the new nickname
     const updatedUser = { ...authState.user, nickname: newNickname };
     setAuthState(current => ({
       ...current,

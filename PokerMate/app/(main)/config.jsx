@@ -3,6 +3,7 @@ import { View, StyleSheet, SafeAreaView, ScrollView, Alert, KeyboardAvoidingView
 import { Text, TextInput, Button, Card, useTheme, ActivityIndicator  } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../context/AuthContext';
 
 //const API_URL = 'https://PokerMate.somee.com/api';
 const CONFIG_STORAGE_KEY = '@PokerSolver:config'; // A unique key for our data
@@ -10,12 +11,13 @@ const CONFIG_STORAGE_KEY = '@PokerSolver:config'; // A unique key for our data
 export default function ConfigPage() {
   const router = useRouter();
   const theme = useTheme();
+  const { token } = useAuth();
   
 
   // State for our form inputs
   const [minTransfer, setMinTransfer] = useState(''); 
   const [currency, setCurrency] = useState('₪');
-  const [minChip, setMinChip] = useState('0.25');
+  const [minChip, setMinChip] = useState('1');
   const [defaultTime, setDefaultTime] = useState('30'); 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -29,7 +31,7 @@ export default function ConfigPage() {
           const savedConfig = JSON.parse(jsonValue);
           setMinTransfer(savedConfig.minTransfer || '');
           setCurrency(savedConfig.currency || '₪');
-          setMinChip(savedConfig.minChip || '0.25');
+          setMinChip(savedConfig.minChip || '1');
           setDefaultTime(savedConfig.defaultTime || '30');
         }
       } catch (e) {
@@ -43,16 +45,43 @@ export default function ConfigPage() {
 
   // SAVE settings 
   const handleSave = async () => {
+  try {
+    const config = { minTransfer, currency, minChip, defaultTime };
+    
+    // Save locally first
+    const jsonValue = JSON.stringify(config);
+    await AsyncStorage.setItem(CONFIG_STORAGE_KEY, jsonValue);
+    
+    // send to server
     try {
-      const config = { minTransfer, currency, minChip, defaultTime };
-      const jsonValue = JSON.stringify(config);
-      await AsyncStorage.setItem(CONFIG_STORAGE_KEY, jsonValue);
-      Alert.alert("Success", "Configuration saved!");
-      router.back();
-    } catch (e) {
-      Alert.alert("Error", "Failed to save config.");
+      const response = await fetch(`${API_URL}/profile/update-min-chip`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          minChip: parseFloat(minChip) || 0 
+        }),
+      });
+      
+      if (!response.ok) {
+        console.log('Warning: Could not sync minChip to database');
+        // Don't fail the whole save if DB sync fails
+      } else {
+        console.log('MinChip synced to database successfully');
+      }
+    } catch (syncError) {
+      console.log('Database sync error:', syncError);
+      // Continue with local save even if DB sync fails
     }
-  };
+    
+    Alert.alert("Success", "Configuration saved!");
+    router.back();
+  } catch (e) {
+    Alert.alert("Error", "Failed to save config.");
+  }
+};
   
   // --- CURRENCY PICKER  ---
   const showCurrencyPicker = () => {
